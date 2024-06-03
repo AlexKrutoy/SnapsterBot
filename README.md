@@ -4,6 +4,9 @@
 
 [![Static Badge](https://img.shields.io/badge/Telegram-Bot%20Link-Link?style=for-the-badge&logo=Telegram&logoColor=white&logoSize=auto&color=blue)](t.me/snapster_bot?start=737844465)
 
+<img src="https://github.com/AlexKrutoy/SnapsterBot/assets/65369825/eff36f1a-d162-4bf9-9599-56748480f957" width="800" height="700"/>
+
+<img src="https://github.com/AlexKrutoy/SnapsterBot/assets/65369825/0c1233f4-0ad2-48f6-9feb-51826aaea194" width="400" height="600"/>
 
 ## Recommendation before use
 
