@@ -1,5 +1,5 @@
 import asyncio
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 
 import aiohttp
 import json
@@ -87,30 +87,34 @@ class Tapper:
             logger.error(f"{self.session_name} | Unknown error during Authorization: {error}")
             await asyncio.sleep(delay=3)
 
-    async def get_stats(self, http_client: aiohttp.ClientSession, headers_send):
+    async def get_stats(self, http_client: aiohttp.ClientSession):
         try:
-            response = await http_client.get(url='https://45.87.154.135/api/user', headers=headers_send)
-            response_text = await response.text()
-            response.raise_for_status()
-            data = json.loads(response_text)
-            points = data['points']
-            last_claim = data['dateLastClaimed']
-            return (points,
-                    last_claim)
+            async with http_client.get(url='https://45.87.154.135/api/user') as response:
+                response_text = await response.text()
+                if response_text:
+                    try:
+                        data = json.loads(response_text)
+                        points = data.get('points')
+                        last_claim = data.get('dateLastClaimed')
+                        return (points,
+                                last_claim)
+                    except json.JSONDecodeError as error:
+                        logger.error(f"{self.session_name} | JSON decode error: {error}")
+                        logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
+                        return None, None
+                else:
+                    logger.error(f"{self.session_name} | Empty response received")
+                    return None, None
         except Exception as error:
-            status = response.status if 'response' in locals() else 'No response'
-            if status == 503:
-                return None, None
-            else:
-                logger.error(f"{self.session_name} | Error getting stats: {error}")
-                return "Not", "Not"
+            logger.error(f"{self.session_name} | Error happened: {error}")
+            logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
+            logger.error(f"{self.session_name} | Headers: {response.headers}")
+            return None, None
 
-    async def daily_claim(self, http_client: aiohttp.ClientSession, headers_send) -> bool:
+    async def daily_claim(self, http_client: aiohttp.ClientSession) -> bool:
         try:
-            response = await http_client.post(url="https://45.87.154.135/api/claim-daily", headers=headers_send)
-            response.raise_for_status()
-            
-            return True
+            async with http_client.post(url="https://45.87.154.135/api/claim-daily"):
+                return True
         except Exception:
             return False
 
@@ -130,31 +134,41 @@ class Tapper:
                 await self.check_proxy(http_client=http_client, proxy=proxy)
 
             tg_web_data = await self.get_tg_web_data(proxy=proxy)
-            headers['x-telegram-auth'] = tg_web_data
-            headers['User-Agent'] = generate_random_user_agent(device_type='android', browser_type='chrome')
+            tg_web_data_parts = tg_web_data.split('&')
+            query_id = tg_web_data_parts[0].split('=')[1]
+            user_data = tg_web_data_parts[1].split('=')[1]
+            auth_date = tg_web_data_parts[2].split('=')[1]
+            hash_value = tg_web_data_parts[3].split('=')[1]
+
+            user_data_encoded = quote(user_data)
+            init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
+            http_client.headers['x-telegram-auth'] = f"{init_data}"
+            http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android',
+                                                                           browser_type='chrome')
 
             while True:
                 try:
-                    points, last_claim = await self.get_stats(http_client=http_client, headers_send=headers)
+                    points, last_claim = await self.get_stats(http_client=http_client)
                     if points is None and last_claim is None:
                         logger.info(f"{self.session_name} | Bot is lagging, retrying...")
                         await asyncio.sleep(3)
                         continue
-                    elif points == "Not" and last_claim == "Not":
-                        logger.error(f"{self.session_name} | Something wrong")
-                        continue
 
                     logger.info(f"{self.session_name} | Your points right now: {points}")
+
+                    await asyncio.sleep(2)
+
                     current_time = datetime.now()
                     convert = datetime.strptime(last_claim, "%Y-%m-%dT%H:%M:%S.%fZ")
-                    convert += timedelta(hours=24)
+                    convert += timedelta(hours=27)
                     if current_time >= convert:
-                        status = await self.daily_claim(http_client=http_client, headers_send=headers)
+                        status = await self.daily_claim(http_client=http_client)
                         if status is True:
                             logger.success(f"{self.session_name} | Daily claim successful")
                     else:
                         logger.info(f"{self.session_name} | Can`t daily claim, going sleep 1 hour")
                         await asyncio.sleep(delay=3600)
+                    await asyncio.sleep(5)
 
                 except InvalidSession as error:
                     raise error
