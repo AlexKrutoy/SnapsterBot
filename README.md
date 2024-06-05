@@ -18,7 +18,8 @@
 | Feature                                                     | Supported  |
 |---------------------------------------------------------------|:----------------:|
 | Multithreading                                                |        ✅        |
-| Auto-claim daily reward                                      |        ✅        |
+| Proxy binding to session                                      |        ✅        |
+| Auto-claim daily reward                                       |        ✅        |
 | Support for tdata / pyrogram .session / telethon .session     |        ✅        |
 
 
