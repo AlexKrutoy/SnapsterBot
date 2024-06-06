@@ -133,21 +133,24 @@ class Tapper:
             if proxy:
                 await self.check_proxy(http_client=http_client, proxy=proxy)
 
-            tg_web_data = await self.get_tg_web_data(proxy=proxy)
-            tg_web_data_parts = tg_web_data.split('&')
-            query_id = tg_web_data_parts[0].split('=')[1]
-            user_data = tg_web_data_parts[1].split('=')[1]
-            auth_date = tg_web_data_parts[2].split('=')[1]
-            hash_value = tg_web_data_parts[3].split('=')[1]
-
-            user_data_encoded = quote(user_data)
-            init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
-            http_client.headers['x-telegram-auth'] = f"{init_data}"
-            http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android',
-                                                                           browser_type='chrome')
-
             while True:
                 try:
+                    tg_web_data = await self.get_tg_web_data(proxy=proxy)
+                    tg_web_data_parts = tg_web_data.split('&')
+                    query_id = tg_web_data_parts[0].split('=')[1]
+                    user_data = tg_web_data_parts[1].split('=')[1]
+                    auth_date = tg_web_data_parts[2].split('=')[1]
+                    hash_value = tg_web_data_parts[3].split('=')[1]
+                    
+                    user_data_encoded = quote(user_data)
+                    init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
+                    http_client.headers['x-telegram-auth'] = f"{init_data}"
+                    http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android',
+                                                                           browser_type='chrome')
+
+                    if not tg_web_data:
+                        continue
+                    
                     points, last_claim = await self.get_stats(http_client=http_client)
                     if points is None and last_claim is None:
                         logger.info(f"{self.session_name} | Bot is lagging, retrying...")
