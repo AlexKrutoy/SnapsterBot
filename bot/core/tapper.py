@@ -177,7 +177,8 @@ class Tapper:
                     raise error
 
                 except Exception as error:
-                    logger.error(f"{self.session_name} | Unknown error: {error}")
+                    escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
+                    logger.error(f"{self.session_name} | Unknown error: {escaped_error}")
                     await asyncio.sleep(delay=3)
 
 
