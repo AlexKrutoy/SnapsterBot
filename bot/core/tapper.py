@@ -96,17 +96,17 @@ class Tapper:
                         data = json.loads(response_text)
                         points = data.get('points')
                         last_claim = data.get('dateLastClaimed')
-                        return (points,
-                                last_claim)
+                        return (points, last_claim)
                     except json.JSONDecodeError as error:
-                        logger.error(f"{self.session_name} | JSON decode error: {error}")
+                        logger.error(f"{self.session_name} | JSON decode error: {escaped_error}")
                         logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
                         return None, None
                 else:
                     logger.error(f"{self.session_name} | Empty response received")
                     return None, None
         except Exception as error:
-            logger.error(f"{self.session_name} | Error happened: {error}")
+            escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
+            logger.error(f"{self.session_name} | Error happened: {escaped_error}")
             logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
             logger.error(f"{self.session_name} | Headers: {response.headers}")
             return None, None
@@ -115,7 +115,9 @@ class Tapper:
         try:
             async with http_client.post(url="https://45.87.154.135/api/claim-daily"):
                 return True
-        except Exception:
+        except Exception as error:
+            escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
+            logger.error(f"{self.session_name} | Daily claim error: {escaped_error}")
             return False
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
@@ -124,7 +126,8 @@ class Tapper:
             ip = (await response.json()).get('origin')
             logger.info(f"{self.session_name} | Proxy IP: {ip}")
         except Exception as error:
-            logger.error(f"{self.session_name} | Proxy: {proxy} | Error: {error}")
+            escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
+            logger.error(f"{self.session_name} | Proxy: {proxy} | Error: {escaped_error}")
 
     async def run(self, proxy: str | None) -> None:
         proxy_conn = ProxyConnector().from_url(proxy) if proxy else None
@@ -141,16 +144,16 @@ class Tapper:
                     user_data = tg_web_data_parts[1].split('=')[1]
                     auth_date = tg_web_data_parts[2].split('=')[1]
                     hash_value = tg_web_data_parts[3].split('=')[1]
-                    
+
                     user_data_encoded = quote(user_data)
                     init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
                     http_client.headers['x-telegram-auth'] = f"{init_data}"
                     http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android',
-                                                                           browser_type='chrome')
+                                                                                   browser_type='chrome')
 
                     if not tg_web_data:
                         continue
-                    
+
                     points, last_claim = await self.get_stats(http_client=http_client)
                     if points is None and last_claim is None:
                         logger.info(f"{self.session_name} | Bot is lagging, retrying...")
