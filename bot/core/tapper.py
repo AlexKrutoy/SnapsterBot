@@ -84,10 +84,12 @@ class Tapper:
             raise error
 
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error during Authorization: {error}")
+            escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
+            logger.error(f"{self.session_name} | Unknown error during Authorization: {escaped_error}")
             await asyncio.sleep(delay=3)
 
     async def get_stats(self, http_client: aiohttp.ClientSession):
+        response_text = ""
         try:
             async with http_client.get(url='https://45.87.154.135/api/user') as response:
                 response_text = await response.text()
@@ -98,6 +100,7 @@ class Tapper:
                         last_claim = data.get('dateLastClaimed')
                         return (points, last_claim)
                     except json.JSONDecodeError as error:
+                        escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
                         logger.error(f"{self.session_name} | JSON decode error: {escaped_error}")
                         logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
                         return None, None
@@ -144,16 +147,16 @@ class Tapper:
                     user_data = tg_web_data_parts[1].split('=')[1]
                     auth_date = tg_web_data_parts[2].split('=')[1]
                     hash_value = tg_web_data_parts[3].split('=')[1]
-
+                    
                     user_data_encoded = quote(user_data)
                     init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
                     http_client.headers['x-telegram-auth'] = f"{init_data}"
                     http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android',
-                                                                                   browser_type='chrome')
+                                                                           browser_type='chrome')
 
                     if not tg_web_data:
                         continue
-
+                    
                     points, last_claim = await self.get_stats(http_client=http_client)
                     if points is None and last_claim is None:
                         logger.info(f"{self.session_name} | Bot is lagging, retrying...")
