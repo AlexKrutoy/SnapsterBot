@@ -102,7 +102,10 @@ class Tapper:
                     except json.JSONDecodeError as error:
                         escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
                         logger.error(f"{self.session_name} | JSON decode error: {escaped_error}")
-                        logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
+                        logger.error(f"{self.session_name} | Response: {response}")
+                        logger.error(f"{self.session_name} | headers: {http_client.headers}")
+                        logger.error(f"{self.session_name} | Headers response: {response.headers}")
+                        logger.error(f"{self.session_name} | Response text: {response_text.encode('unicode_escape')}")
                         return None, None
                 else:
                     logger.error(f"{self.session_name} | Empty response received")
@@ -112,6 +115,8 @@ class Tapper:
             logger.error(f"{self.session_name} | Error happened: {escaped_error}")
             logger.error(f"{self.session_name} | Response: {response_text.encode('unicode_escape')}")
             logger.error(f"{self.session_name} | Headers: {response.headers}")
+            logger.error(f"{self.session_name} | headers: {http_client.headers}")
+            logger.error(f"{self.session_name} | Response: {response}")
             return None, None
 
     async def daily_claim(self, http_client: aiohttp.ClientSession) -> bool:
