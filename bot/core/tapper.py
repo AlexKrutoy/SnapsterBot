@@ -143,10 +143,9 @@ class Tapper:
         async with CloudflareScraper(headers=headers, connector=proxy_conn) as http_client:
             if proxy:
                 await self.check_proxy(http_client=http_client, proxy=proxy)
-
+            tg_web_data = await self.get_tg_web_data(proxy=proxy)
             while True:
                 try:
-                    tg_web_data = await self.get_tg_web_data(proxy=proxy)
                     tg_web_data_parts = tg_web_data.split('&')
                     query_id = tg_web_data_parts[0].split('=')[1]
                     user_data = tg_web_data_parts[1].split('=')[1]
