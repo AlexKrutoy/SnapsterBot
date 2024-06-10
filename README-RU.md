@@ -46,7 +46,7 @@
 Вы можете скачать [**Репозиторий**](https://github.com/AlexKrutoy/SnapsterBot) клонированием на вашу систему и установкой необходимых зависимостей:
 ```shell
 git clone https://github.com/AlexKrutoy/SnapsterBot.git
-cd CEX.IO-bot
+cd SnapsterBot
 ```
 
 Затем для автоматической установки введите:
