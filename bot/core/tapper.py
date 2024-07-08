@@ -15,6 +15,7 @@ from .agents import generate_random_user_agent
 from bot.utils import logger
 from bot.exceptions import InvalidSession
 from .headers import headers
+from bot.config import settings
 
 
 class Tapper:
