@@ -15,19 +15,21 @@
 > 🇷 🇺 README in russian available [here](README-RU.md)
 
 ## Features  
-| Feature                                                     | Supported  |
-|---------------------------------------------------------------|:----------------:|
-| Multithreading                                                |        ✅        |
-| Proxy binding to session                                      |        ✅        |
-| Auto-claim daily reward                                       |        ✅        |
-| Support for tdata / pyrogram .session / telethon .session     |        ✅        |
+| Feature                                                   | Supported |
+|-----------------------------------------------------------|:---------:|
+| Multithreading                                            |     ✅     |
+| Proxy binding to session                                  |     ✅     |
+| Auto-claim daily reward                                   |     ✅     |
+| Auto Referall                                             |     ✅     |
+| Support for tdata / pyrogram .session / telethon .session |     ✅     |
 
 
 ## [Settings](https://github.com/AlexKrutoy/SnapsterBot/blob/main/.env-example/)
-| Settings | Description |
-|--------------------------|:---------------------------------------------------------------------------------------------:|
-| **API_ID / API_HASH**    | Platform data from which to run the Telegram session (default - android)                     |
-| **USE_PROXY_FROM_FILE**  | Whether to use a proxy from the bot/config/proxies.txt file (True / False)                   |
+| Settings                |                                Description                                 |
+|-------------------------|:--------------------------------------------------------------------------:|
+| **API_ID / API_HASH**   |  Platform data from which to run the Telegram session (default - android)  |
+| **REF_ID**              |          Argument from referral bot link after ?start={argument}           |
+| **USE_PROXY_FROM_FILE** | Whether to use a proxy from the bot/config/proxies.txt file (True / False) |
 
 ## Quick Start 📚
 
