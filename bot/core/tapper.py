@@ -151,6 +151,7 @@ class Tapper:
     async def make_request(self, http_client, method, endpoint=None, url=None, **kwargs):
         full_url = url or f"https://prod.snapster.bot/api/{endpoint or ''}"
         response = await http_client.request(method, full_url, **kwargs)
+        response.raise_for_status()
         return await response.json()
 
     async def get_stats(self, http_client: aiohttp.ClientSession):
@@ -207,7 +208,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'GET', f'referral/calculateReferralPoints'
                                                                     f'?telegramId={self.user_id}')
-            return resp_json['data']['pointsToClaim']
+            return resp_json.get('data', {}).get('pointsToClaim', 0)
         except Exception as error:
             logger.error(f"{self.session_name} | RefPoints error: {error}")
 
