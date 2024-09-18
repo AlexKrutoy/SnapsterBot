@@ -151,11 +151,12 @@ class Tapper:
     async def make_request(self, http_client, method, endpoint=None, url=None, **kwargs):
         full_url = url or f"https://prod.snapster.bot/api/{endpoint or ''}"
         response = await http_client.request(method, full_url, **kwargs)
-        return await response.json()
+        return response
 
     async def get_stats(self, http_client: aiohttp.ClientSession):
         try:
             stats = await self.make_request(http_client, 'GET', f'user/getUserByTelegramId?telegramId={self.user_id}')
+            stats = await stats.json(content_type=None)
             data = stats.get('data', {})
             league = data.get('currentLeague', {})
             balance = data.get('pointsCount', {})
@@ -170,24 +171,26 @@ class Tapper:
             return daily
 
         except Exception as error:
-            logger.error(f"{self.session_name} | Daily claim error: {error}")
+            logger.error(f"{self.session_name} | Get stats error: {error}")
             return False
 
     async def start_daily_streak(self, http_client: aiohttp.ClientSession):
         try:
             resp_json = await self.make_request(http_client, 'POST', 'dailyQuest/startDailyBonusQuest',
                                                 json={'telegramId': str(self.user_id)})
+            resp_json = await resp_json.json(content_type=None)
             if resp_json.get('result', {}) is False:
                 return False
             return True
         except Exception as error:
-            logger.error(f"{self.session_name} | Daily claim error: {error}")
+            logger.error(f"{self.session_name} | Start daily tasks error: {error}")
             return False
 
     async def join_daily(self, http_client: aiohttp.ClientSession, days):
         try:
             resp_json = await self.make_request(http_client, 'POST', 'dailyQuest/claimDailyQuestBonus',
                                                 json={'telegramId': str(self.user_id), 'dayCount': days+1})
+            resp_json = await resp_json.json(content_type=None)
             if resp_json.get('result', {}) is True:
                 return True
             return False
@@ -198,7 +201,8 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'user/claimMiningBonus',
                                                 json={'telegramId': str(self.user_id)})
-            points = resp_json('data, {}').get('pointsClaimed', 0)
+            resp_json = await resp_json.json()
+            points = resp_json.get('data', {}).get('pointsClaimed', 0)
             return points
         except Exception as error:
             logger.error(f"{self.session_name} | Claim mining error: {error}")
@@ -207,6 +211,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'GET', f'referral/calculateReferralPoints'
                                                                     f'?telegramId={self.user_id}')
+            resp_json = await resp_json.json(content_type=None)
             return resp_json.get('data', {}).get('pointsToClaim', 0)
         except Exception as error:
             logger.error(f"{self.session_name} | RefPoints error: {error}")
@@ -215,6 +220,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'referral/claimReferralPoints',
                                                 json={'telegramId': str(self.user_id)})
+            resp_json = await resp_json.json(content_type=None)
             if resp_json.get('result', {}) is True:
                 return True
             return False
@@ -225,6 +231,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'GET', f'quest/getQuests'
                                                                     f'?telegramId={self.user_id}')
+            resp_json = await resp_json.json(content_type=None)
             quests = []
             data = resp_json.get('data', {})
             if data:
@@ -244,9 +251,14 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'quest/startQuest',
                                                 json={"telegramId": str(self.user_id),"questId": quest_id})
+            resp_json = await resp_json.json(content_type=None)
             if resp_json.get('result', {}) is True:
                 return True
             return False
+
+        except ValueError:
+            pass
+
         except Exception as error:
             logger.error(f"{self.session_name} | Start quest error: {error}")
 
@@ -254,9 +266,14 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'quest/claimQuestBonus',
                                                 json={'telegramId': str(self.user_id),"questId": quest_id})
+            resp_json = await resp_json.json(content_type=None)
             if resp_json.get('result', {}) is True:
                 return True
             return False
+
+        except ValueError:
+            pass
+
         except Exception as error:
             logger.error(f"{self.session_name} | Claim quest error: {error}")
 
@@ -294,6 +311,8 @@ class Tapper:
 
                     daily_streak = await self.get_stats(http_client=http_client)
 
+                    await asyncio.sleep(2)
+
                     streak_status = await self.start_daily_streak(http_client=http_client)
                     if streak_status:
                         logger.success(f"{self.session_name} | Daily streak started")
@@ -305,28 +324,37 @@ class Tapper:
                         if status:
                             logger.success(f"{self.session_name} | Daily joined, got points")
 
+                    await asyncio.sleep(2)
+
                     if settings.CLAIM_REF_POINTS:
                         ref_points = await self.get_ref_points(http_client)
-                        if ref_points > 0:
+                        if ref_points and ref_points > 0:
                             status = await self.claim_ref_points(http_client=http_client)
                             if status:
                                 logger.success(f"{self.session_name} | Points from referrals claimed, got - <lc>{ref_points}</lc>")
 
+                    await asyncio.sleep(2)
+
                     if settings.AUTO_QUEST:
-                        quests = await self.get_quests(http_client)
-                        for quest in quests:
-                            id = quest['id']
-                            title = quest['title']
-                            points = quest['points']
-                            await self.start_quest(http_client=http_client, quest_id=id)
-                            status = await self.claim_quest(http_client=http_client, quest_id=id)
-                            if status:
-                                logger.success(f'{self.session_name} | Successfully done quest - <ly>"{title}"</ly>, '
-                                               f'got <lc>{points}</lc> points')
+                        try:
+                            quests = await self.get_quests(http_client)
+                            for quest in quests:
+                                id = quest['id']
+                                title = quest['title']
+                                points = quest['points']
+                                await self.start_quest(http_client=http_client, quest_id=id)
+                                status = await self.claim_quest(http_client=http_client, quest_id=id)
+                                if status:
+                                    logger.success(f'{self.session_name} | Successfully done quest - <ly>"{title}"</ly>, '
+                                                   f'got <lc>{points}</lc> points')
+                        except Exception:
+                            pass
+
+                    await asyncio.sleep(2)
 
                     if settings.AUTO_MINING:
                         points = await self.claim_mining(http_client=http_client)
-                        if points > 0:
+                        if points and points > 1:
                             logger.success(f'{self.session_name} | Successfully mined <lc>{points}</lc> points')
 
                     logger.info(f"{self.session_name} | Going sleep 1h")
