@@ -20,7 +20,9 @@
 | Multithreading                                            |     ✅     |
 | Proxy binding to session                                  |     ✅     |
 | Auto-claim daily reward                                   |     ✅     |
-| Auto Referall                                             |     ✅     |
+| Auto Referral                                             |     ✅     |
+| Auto mining                                               |     ✅     | 
+| Auto quests                                               |     ✅     |
 | Support for tdata / pyrogram .session / telethon .session |     ✅     |
 
 
@@ -28,6 +30,9 @@
 | Settings                |                                Description                                 |
 |-------------------------|:--------------------------------------------------------------------------:|
 | **API_ID / API_HASH**   |  Platform data from which to run the Telegram session (default - android)  |
+| **AUTO_MINING**         |                     Auto claim mining (default - True)                     |
+| **CLAIM_REF_POINTS**    |             Auto claim reward from referrals (default - True)              |
+| **AUTO_QUEST**          |                Auto start and claim quests (default - True)                |
 | **REF_ID**              |          Argument from referral bot link after ?start={argument}           |
 | **USE_PROXY_FROM_FILE** | Whether to use a proxy from the bot/config/proxies.txt file (True / False) |
 

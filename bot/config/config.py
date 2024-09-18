@@ -9,6 +9,10 @@ class Settings(BaseSettings):
 
     REF_ID: str = ''
 
+    AUTO_MINING: bool = True
+    CLAIM_REF_POINTS: bool = True
+    AUTO_QUEST: bool = True
+
     USE_PROXY_FROM_FILE: bool = False
 
 
