@@ -151,19 +151,18 @@ class Tapper:
     async def make_request(self, http_client, method, endpoint=None, url=None, **kwargs):
         full_url = url or f"https://prod.snapster.bot/api/{endpoint or ''}"
         response = await http_client.request(method, full_url, **kwargs)
-        response.raise_for_status()
         return await response.json()
 
     async def get_stats(self, http_client: aiohttp.ClientSession):
         try:
             stats = await self.make_request(http_client, 'GET', f'user/getUserByTelegramId?telegramId={self.user_id}')
-            data = stats.get('data')
-            league = data.get('currentLeague')
-            balance = data.get('pointsCount')
-            leagueId = league.get('leagueId')
-            mining_speed = league.get('miningSpeed')
-            leagueName = league.get('title')
-            daily = data.get('dailyBonusStreakCount')
+            data = stats.get('data', {})
+            league = data.get('currentLeague', {})
+            balance = data.get('pointsCount', {})
+            leagueId = league.get('leagueId', {})
+            mining_speed = league.get('miningSpeed', {})
+            leagueName = league.get('title', {})
+            daily = data.get('dailyBonusStreakCount', {})
             logger.info(f"{self.session_name} | Balance - <lc>{balance}</lc>, Daily streak - <lc>{daily}</lc> days")
             logger.info(f"{self.session_name} | Mining speed - <lc>{mining_speed} / min</lc>, League - Name: {leagueName}, "
                         f"ID: {leagueId}")
@@ -178,7 +177,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'dailyQuest/startDailyBonusQuest',
                                                 json={'telegramId': str(self.user_id)})
-            if resp_json.get('result') is False:
+            if resp_json.get('result', {}) is False:
                 return False
             return True
         except Exception as error:
@@ -189,7 +188,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'dailyQuest/claimDailyQuestBonus',
                                                 json={'telegramId': str(self.user_id), 'dayCount': days+1})
-            if resp_json['result'] is True:
+            if resp_json.get('result', {}) is True:
                 return True
             return False
         except Exception as error:
@@ -199,7 +198,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'user/claimMiningBonus',
                                                 json={'telegramId': str(self.user_id)})
-            points = resp_json['data'].get('pointsClaimed', 0)
+            points = resp_json('data, {}').get('pointsClaimed', 0)
             return points
         except Exception as error:
             logger.error(f"{self.session_name} | Claim mining error: {error}")
@@ -216,7 +215,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'referral/claimReferralPoints',
                                                 json={'telegramId': str(self.user_id)})
-            if resp_json['result'] is True:
+            if resp_json.get('result', {}) is True:
                 return True
             return False
         except Exception as error:
@@ -227,15 +226,16 @@ class Tapper:
             resp_json = await self.make_request(http_client, 'GET', f'quest/getQuests'
                                                                     f'?telegramId={self.user_id}')
             quests = []
-            data = resp_json['data']
-            for quest in data:
-                quests.append(({
-                    'id': quest['id'],
-                    'title': quest['title'],
-                    'points': quest['bonusPoints']
-                }))
+            data = resp_json.get('data', {})
+            if data:
+                for quest in data:
+                    quests.append(({
+                        'id': quest['id'],
+                        'title': quest['title'],
+                        'points': quest['bonusPoints']
+                    }))
 
-            return quests
+                return quests
 
         except Exception as error:
             logger.error(f"{self.session_name} | Get Quests error: {error}")
@@ -244,7 +244,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'quest/startQuest',
                                                 json={"telegramId": str(self.user_id),"questId": quest_id})
-            if resp_json['result'] is True:
+            if resp_json.get('result', {}) is True:
                 return True
             return False
         except Exception as error:
@@ -254,7 +254,7 @@ class Tapper:
         try:
             resp_json = await self.make_request(http_client, 'POST', 'quest/claimQuestBonus',
                                                 json={'telegramId': str(self.user_id),"questId": quest_id})
-            if resp_json['result'] is True:
+            if resp_json.get('result', {}) is True:
                 return True
             return False
         except Exception as error:
@@ -263,7 +263,7 @@ class Tapper:
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
             response = await http_client.get(url='https://httpbin.org/ip', timeout=aiohttp.ClientTimeout(5))
-            ip = (await response.json()).get('origin')
+            ip = (await response.json()).get('origin', {})
             logger.info(f"{self.session_name} | Proxy IP: {ip}")
         except Exception as error:
             escaped_error = str(error).replace('<', '&lt;').replace('>', '&gt;')
