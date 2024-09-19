@@ -343,10 +343,12 @@ class Tapper:
                                 title = quest['title']
                                 points = quest['points']
                                 await self.start_quest(http_client=http_client, quest_id=id)
+                                await asyncio.sleep(.1)
                                 status = await self.claim_quest(http_client=http_client, quest_id=id)
                                 if status:
                                     logger.success(f'{self.session_name} | Successfully done quest - <ly>"{title}"</ly>, '
                                                    f'got <lc>{points}</lc> points')
+                                await asyncio.sleep(.1)
                         except Exception:
                             pass
 
