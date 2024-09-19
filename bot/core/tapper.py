@@ -326,6 +326,13 @@ class Tapper:
 
                     await asyncio.sleep(2)
 
+                    if settings.AUTO_MINING:
+                        points = await self.claim_mining(http_client=http_client)
+                        if points and points > 1:
+                            logger.success(f'{self.session_name} | Successfully mined <lc>{points}</lc> points')
+
+                    await asyncio.sleep(2)
+
                     if settings.CLAIM_REF_POINTS:
                         ref_points = await self.get_ref_points(http_client)
                         if ref_points and ref_points > 0:
@@ -351,13 +358,6 @@ class Tapper:
                                 await asyncio.sleep(.1)
                         except Exception:
                             pass
-
-                    await asyncio.sleep(2)
-
-                    if settings.AUTO_MINING:
-                        points = await self.claim_mining(http_client=http_client)
-                        if points and points > 1:
-                            logger.success(f'{self.session_name} | Successfully mined <lc>{points}</lc> points')
 
                     logger.info(f"{self.session_name} | Going sleep 1h")
 
